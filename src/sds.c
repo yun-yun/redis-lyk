@@ -125,8 +125,11 @@ sds _sdsnewlen(const void *init, size_t initlen, int trymalloc) {
     else if (!init)
         // 如果传入的init == NULL那就将申请的内存全都填充为0
         memset(sh, 0, hdrlen+initlen+1);
+    //sds指针并不是指向结构体起始位置，而是指向char[]数组头部，这样可以使得sds使用string函数
     s = (char*)sh+hdrlen;
+    // flags的指针
     fp = ((unsigned char*)s)-1;
+    // 实际可用的数组长度（sds总大小 - sds头部大小 - 最后一位默认'\0'）
     usable = usable-hdrlen-1;
     if (usable > sdsTypeMaxSize(type))
         usable = sdsTypeMaxSize(type);
