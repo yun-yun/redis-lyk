@@ -41,6 +41,7 @@
 
 const char *SDS_NOINIT = "SDS_NOINIT";
 
+// 申请内存时struct中的char[]大小实际是指针
 static inline int sdsHdrSize(char type) {
     switch(type&SDS_TYPE_MASK) {
         case SDS_TYPE_5:
@@ -107,18 +108,22 @@ sds _sdsnewlen(const void *init, size_t initlen, int trymalloc) {
     /* Empty strings are usually created in order to append. Use type 8
      * since type 5 is not good at this. */
     if (type == SDS_TYPE_5 && initlen == 0) type = SDS_TYPE_8;
+    // sds的header的长度
     int hdrlen = sdsHdrSize(type);
     unsigned char *fp; /* flags pointer. */
     size_t usable;
 
     assert(initlen + hdrlen + 1 > initlen); /* Catch size_t overflow */
+    // 申请出一块内存
     sh = trymalloc?
+         // 知识点：结构体的伸缩数组
         s_trymalloc_usable(hdrlen+initlen+1, &usable) :
-        s_malloc_usable(hdrlen+initlen+1, &usable);
+         s_malloc_usable(hdrlen+initlen+1, &usable);
     if (sh == NULL) return NULL;
     if (init==SDS_NOINIT)
         init = NULL;
     else if (!init)
+        // 如果传入的init == NULL那就将申请的内存全都填充为0
         memset(sh, 0, hdrlen+initlen+1);
     s = (char*)sh+hdrlen;
     fp = ((unsigned char*)s)-1;
