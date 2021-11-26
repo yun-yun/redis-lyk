@@ -3639,6 +3639,7 @@ void createSharedObjects(void) {
     shared.maxstring = sdsnew("maxstring");
 }
 
+//初始化服务器配置
 void initServerConfig(void) {
     int j;
     char *default_bindaddr[CONFIG_DEFAULT_BINDADDR_COUNT] = CONFIG_DEFAULT_BINDADDR;
@@ -7885,6 +7886,7 @@ int main(int argc, char **argv) {
 #endif
     setlocale(LC_COLLATE,"");
     tzset(); /* Populates 'timezone' global. */
+    // 设置内存溢出时的handler
     zmalloc_set_oom_handler(redisOutOfMemoryHandler);
     srand(time(NULL)^getpid());
     srandom(time(NULL)^getpid());
@@ -7905,6 +7907,7 @@ int main(int argc, char **argv) {
     char *exec_name = strrchr(argv[0], '/');
     if (exec_name == NULL) exec_name = argv[0];
     server.sentinel_mode = checkForSentinelMode(argc,argv, exec_name);
+    // 初始化服务器配置
     initServerConfig();
     ACLInit(); /* The ACL subsystem must be initialized ASAP because the
                   basic networking code and client creation depends on it. */
