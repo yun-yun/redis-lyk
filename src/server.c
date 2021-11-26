@@ -7929,6 +7929,7 @@ int main(int argc, char **argv) {
         initSentinel();
     }
 
+    // 检查rdb和aof文件是否合格
     /* Check if we need to start in redis-check-rdb/aof mode. We just execute
      * the program main. However the program is part of the Redis executable
      * so that we can easily execute an RDB check on loading errors. */
