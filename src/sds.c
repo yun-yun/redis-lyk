@@ -168,7 +168,9 @@ sds _sdsnewlen(const void *init, size_t initlen, int trymalloc) {
         }
     }
     if (initlen && init)
+        // 内存拷贝
         memcpy(s, init, initlen);
+    // 填入特殊的结束符
     s[initlen] = '\0';
     return s;
 }
@@ -219,6 +221,7 @@ void sdsfree(sds s) {
  * The output will be "2", but if we comment out the call to sdsupdatelen()
  * the output will be "6" as the string was modified but the logical length
  * remains 6 bytes. */
+// 将sds的len用第一个\0的位置进行重置
 void sdsupdatelen(sds s) {
     size_t reallen = strlen(s);
     sdssetlen(s, reallen);
@@ -228,6 +231,7 @@ void sdsupdatelen(sds s) {
  * However all the existing buffer is not discarded but set as free space
  * so that next append operations will not require allocations up to the
  * number of bytes previously available. */
+// 将sds快速清空
 void sdsclear(sds s) {
     sdssetlen(s, 0);
     s[0] = '\0';
@@ -258,6 +262,7 @@ sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
 
     len = sdslen(s);
     sh = (char*)s-sdsHdrSize(oldtype);
+    // 新长度
     reqlen = newlen = (len+addlen);
     assert(newlen > len);   /* Catch size_t overflow */
     if (greedy == 1) {
@@ -300,11 +305,13 @@ sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
 
 /* Enlarge the free space at the end of the sds string more than needed,
  * This is useful to avoid repeated re-allocations when repeatedly appending to the sds. */
+// 将sds扩容到超出需要的大小（贪婪的）
 sds sdsMakeRoomFor(sds s, size_t addlen) {
     return _sdsMakeRoomFor(s, addlen, 1);
 }
 
 /* Unlike sdsMakeRoomFor(), this one just grows to the necessary size. */
+// 只将sds扩容到需要的大小（不贪婪的）
 sds sdsMakeRoomForNonGreedy(sds s, size_t addlen) {
     return _sdsMakeRoomFor(s, addlen, 0);
 }

@@ -80,6 +80,10 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 #define SDS_TYPE_64 4
 #define SDS_TYPE_MASK 7
 #define SDS_TYPE_BITS 3
+/*
+ * sdshdr##T 可以跟据T的不同，生成sdshdr8，sdshdr16，sdshdr32，sdshdr64
+ * 因此 (void*)((s)-(sizeof(struct sdshdr##T))) 也就相当于根据sds指针（指向buf[]的指针），获取sdshdr头部的指针
+ */
 #define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
 #define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)
@@ -100,7 +104,7 @@ static inline size_t sdslen(const sds s) {
     }
     return 0;
 }
-
+// 获取sds的剩余可用长度
 static inline size_t sdsavail(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
