@@ -3616,6 +3616,7 @@ void processEventsWhileBlocked(void) {
      * busy Lua scripts), we set a global flag. When such flag is set, we
      * avoid handling the read part of clients using threaded I/O.
      * See https://github.com/redis/redis/issues/6988 for more info. */
+    // 当进程被阻塞时，会设置一个全局标记，当设置了这个全局标记时，会让IO线程停止接收数据
     ProcessingEventsWhileBlocked = 1;
     while (iterations--) {
         long long startval = server.events_processed_while_blocked;

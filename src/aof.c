@@ -771,6 +771,7 @@ int loadAppendOnlyFile(char *filename) {
         struct redisCommand *cmd;
 
         /* Serve the clients from time to time */
+        // todo 时不时中断下循环，为客户端服务下，避免长时间未响应
         if (!(loops++ % 1000)) {
             loadingProgress(ftello(fp));
             processEventsWhileBlocked();

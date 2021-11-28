@@ -3996,6 +3996,7 @@ void closeSocketListeners(socketFds *sfd) {
 int createSocketAcceptHandler(socketFds *sfd, aeFileProc *accept_handler) {
     int j;
 
+    // 根据当前绑定的IP数量，绑定多个SocketAcceptHandler
     for (j = 0; j < sfd->count; j++) {
         if (aeCreateFileEvent(server.el, sfd->fd[j], AE_READABLE, accept_handler,NULL) == AE_ERR) {
             /* Rollback */
@@ -4058,6 +4059,7 @@ int listenToPort(int port, socketFds *sfd) {
             closeSocketListeners(sfd);
             return C_ERR;
         }
+        //设置网络是非阻塞的
         anetNonBlock(NULL,sfd->fd[sfd->count]);
         anetCloexec(sfd->fd[sfd->count]);
         sfd->count++;
@@ -4314,15 +4316,18 @@ void initServer(void) {
     if (createSocketAcceptHandler(&server.ipfd, acceptTcpHandler) != C_OK) {
         serverPanic("Unrecoverable error creating TCP socket accept handler.");
     }
+    // 给TLS端口绑定监听事件
     if (createSocketAcceptHandler(&server.tlsfd, acceptTLSHandler) != C_OK) {
         serverPanic("Unrecoverable error creating TLS socket accept handler.");
     }
+    // 绑定unix socket监听事件
     if (server.sofd > 0 && aeCreateFileEvent(server.el, server.sofd, AE_READABLE,
                                              acceptUnixHandler, NULL) == AE_ERR) serverPanic("Unrecoverable error creating server.sofd file event.");
 
 
     /* Register a readable event for the pipe used to awake the event loop
      * when a blocked client in a module needs attention. */
+    // 为阻塞通道注册阻塞监听事件
     if (aeCreateFileEvent(server.el, server.module_blocked_pipe[0], AE_READABLE,
                           moduleBlockedClientPipeReadable, NULL) == AE_ERR) {
         serverPanic(
@@ -4332,13 +4337,16 @@ void initServer(void) {
 
     /* Register before and after sleep handlers (note this needs to be done
      * before loading persistence since it is used by processEventsWhileBlocked. */
+    // 在处理完所有事件，进入睡眠之前做的操作
     aeSetBeforeSleepProc(server.el,beforeSleep);
+    // 在睡眠结束后，做的操作
     aeSetAfterSleepProc(server.el,afterSleep);
 
     /* 32 bit instances are limited to 4GB of address space, so if there is
      * no explicit limit in the user provided configuration we set a limit
      * at 3 GB using maxmemory with 'noeviction' policy'. This avoids
      * useless crashes of the Redis instance for out of memory. */
+    // 如果是32位系统，那么就设置默认内存为3G
     if (server.arch_bits == 32 && server.maxmemory == 0) {
         serverLog(LL_WARNING, "Warning: 32 bit instance detected but no memory limit set. Setting 3 GB maxmemory limit with 'noeviction' policy now.");
         server.maxmemory = 3072LL*(1024*1024); /* 3 GB */
@@ -8056,6 +8064,7 @@ int main(int argc, char **argv) {
         moduleInitModulesSystemLast();
         moduleLoadFromQueue();
         ACLLoadUsersAtStartup();
+        // 启动后台线程和IO线程
         InitServerLast();
         loadDataFromDisk();
         /* Open the AOF file if needed. */

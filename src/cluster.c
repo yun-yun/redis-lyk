@@ -613,6 +613,7 @@ void clusterInit(void) {
         serverLog(LL_WARNING, "No bind address is configured, but it is required for the Cluster bus.");
         exit(1);
     }
+    // 是否配置了集群端口，如果没配置就将设置的端口+10000
     int cport = server.cluster_port ? server.cluster_port : port + CLUSTER_PORT_INCR;
     if (listenToPort(cport, &server.cfd) == C_ERR ) {
         /* Note: the following log text is matched by the test suite. */
