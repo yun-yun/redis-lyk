@@ -127,6 +127,7 @@ client *createClient(connection *conn) {
         connEnableTcpNoDelay(conn);
         if (server.tcpkeepalive)
             connKeepAlive(conn,server.tcpkeepalive);
+        // 设置读取的handler
         connSetReadHandler(conn, readQueryFromClient);
         connSetPrivateData(conn, c);
     }
@@ -1024,7 +1025,7 @@ int clientHasPendingReplies(client *c) {
         return c->bufpos || listLength(c->reply);
     }
 }
-//
+// 客户端接收
 void clientAcceptHandler(connection *conn) {
     client *c = connGetPrivateData(conn);
 
@@ -1127,7 +1128,7 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
     }
 
     /* Create connection and client */
-    // 根据连接，创建客户端
+    // 根据连接，创建客户端（重要）
     if ((c = createClient(conn)) == NULL) {
         serverLog(LL_WARNING,
             "Error registering fd event for the new client: %s (conn: %s)",
@@ -2266,6 +2267,7 @@ int processInputBuffer(client *c) {
     return C_OK;
 }
 
+// 在创建客户端时，该方法会被设置为read handler方法
 void readQueryFromClient(connection *conn) {
     client *c = connGetPrivateData(conn);
     int nread, big_arg = 0;
