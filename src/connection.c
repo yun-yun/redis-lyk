@@ -345,21 +345,22 @@ static int connSocketGetType(connection *conn) {
     return CONN_TYPE_SOCKET;
 }
 
+// 为连接绑定方法
 ConnectionType CT_Socket = {
-    .ae_handler = connSocketEventHandler,
-    .close = connSocketClose,
-    .write = connSocketWrite,
-    .read = connSocketRead,
-    .accept = connSocketAccept,
-    .connect = connSocketConnect,
-    .set_write_handler = connSocketSetWriteHandler,
-    .set_read_handler = connSocketSetReadHandler,
-    .get_last_error = connSocketGetLastError,
-    .blocking_connect = connSocketBlockingConnect,
-    .sync_write = connSocketSyncWrite,
-    .sync_read = connSocketSyncRead,
-    .sync_readline = connSocketSyncReadLine,
-    .get_type = connSocketGetType
+        .ae_handler = connSocketEventHandler,
+        .close = connSocketClose,
+        .write = connSocketWrite,
+        .read = connSocketRead,
+        .accept = connSocketAccept,
+        .connect = connSocketConnect,
+        .set_write_handler = connSocketSetWriteHandler,
+        .set_read_handler = connSocketSetReadHandler,
+        .get_last_error = connSocketGetLastError,
+        .blocking_connect = connSocketBlockingConnect,
+        .sync_write = connSocketSyncWrite,
+        .sync_read = connSocketSyncRead,
+        .sync_readline = connSocketSyncReadLine,
+        .get_type = connSocketGetType
 };
 
 

@@ -49,6 +49,7 @@
  * In other cases where we don't want to prematurely lose the connection,
  * it can go beyond 1 as well; currently it is only done by connAccept().
  */
+// 控制对connection的连接引用数量
 static inline void connIncrRefs(connection *conn) {
     conn->refs++;
 }

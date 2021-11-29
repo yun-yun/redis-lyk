@@ -3361,6 +3361,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     }
 
     /* Handle precise timeouts of blocked clients. */
+    // 将阻塞的客户端超时：调用了阻塞命令的客户端等
     handleBlockedClientsTimeout();
 
     /* We should handle pending reads clients ASAP after event loop. */
@@ -3376,6 +3377,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
      * may change the state of Redis Cluster (from ok to fail or vice versa),
      * so it's a good idea to call it before serving the unblocked clients
      * later in this function. */
+    // todo 集群 调用集群的clusterBeforeSleep
     if (server.cluster_enabled) clusterBeforeSleep();
 
     /* Run a fast expire cycle (the called function will return
@@ -4352,6 +4354,7 @@ void initServer(void) {
         server.maxmemory_policy = MAXMEMORY_NO_EVICTION;
     }
 
+    // todo 集群模式
     if (server.cluster_enabled) clusterInit();
     replicationScriptCacheInit();
     scriptingInit(1);
@@ -8067,6 +8070,7 @@ int main(int argc, char **argv) {
         InitServerLast();
         loadDataFromDisk();
         /* Open the AOF file if needed. */
+        // 打开aof文件用于写入
         if (server.aof_state == AOF_ON) {
             server.aof_fd = open(server.aof_filename,
                                  O_WRONLY|O_APPEND|O_CREAT,0644);
@@ -8111,10 +8115,13 @@ int main(int argc, char **argv) {
         serverLog(LL_WARNING,"WARNING: You specified a maxmemory value that is less than 1MB (current value is %llu bytes). Are you sure this is what you really want?", server.maxmemory);
     }
 
+    // 设置CPU亲和性
     redisSetCpuAffinity(server.server_cpulist);
     setOOMScoreAdj(-1);
 
+    // 开始
     aeMain(server.el);
+    // 退出redis前清理
     aeDeleteEventLoop(server.el);
     return 0;
 }
