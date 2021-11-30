@@ -9546,6 +9546,7 @@ void moduleInitModulesSystem(void) {
     /* Reusable client for RM_Call() is created on first use */
     server.module_client = NULL;
 
+    //模块注册核心api
     moduleRegisterCoreAPI();
 
     /* Create a pipe for module threads to be able to wake up the redis main thread.
@@ -9564,6 +9565,7 @@ void moduleInitModulesSystem(void) {
     Timers = raxNew();
 
     /* Setup the event listeners data structures. */
+    // 事件监听器
     RedisModule_EventListeners = listCreate();
 
     /* Our thread-safe contexts GIL must start with already locked:

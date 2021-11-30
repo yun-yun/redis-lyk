@@ -7938,6 +7938,7 @@ int main(int argc, char **argv) {
     initServerConfig();
     ACLInit(); /* The ACL subsystem must be initialized ASAP because the
                   basic networking code and client creation depends on it. */
+    // 加载模块系统，用于命令调用
     moduleInitModulesSystem();
     tlsInit();
 
