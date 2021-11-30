@@ -155,7 +155,7 @@ void aeStop(aeEventLoop *eventLoop) {
     eventLoop->stop = 1;
 }
 
-// redis把网络io事件称为file事件
+// redis把网络io事件称为file事件(重要）
 int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData)
 {
@@ -171,6 +171,7 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
     if (mask & AE_READABLE) fe->rfileProc = proc;
     if (mask & AE_WRITABLE) fe->wfileProc = proc;
     fe->clientData = clientData;
+    // 这里就是把当前事件放入待select的列表中，
     if (fd > eventLoop->maxfd)
         eventLoop->maxfd = fd;
     return AE_OK;

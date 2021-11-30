@@ -76,6 +76,7 @@ ConnectionType CT_Socket;
 
 connection *connCreateSocket() {
     connection *conn = zcalloc(sizeof(connection));
+    // 赋予方法
     conn->type = &CT_Socket;
     conn->fd = -1;
 
@@ -242,6 +243,7 @@ static int connSocketSetReadHandler(connection *conn, ConnectionCallbackFunc fun
     if (!conn->read_handler)
         aeDeleteFileEvent(server.el,conn->fd,AE_READABLE);
     else
+        // 为conn绑定读事件处理器
         if (aeCreateFileEvent(server.el,conn->fd,
                     AE_READABLE,conn->type->ae_handler,conn) == AE_ERR) return C_ERR;
     return C_OK;
