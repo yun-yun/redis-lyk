@@ -5206,8 +5206,10 @@ int processCommand(client *c) {
 
     /* Now lookup the command and check ASAP about trivial error conditions
      * such as wrong arity, bad command name and so forth. */
+    // 查找命令
     c->cmd = c->lastcmd = lookupCommand(c->argv,c->argc);
     if (!c->cmd) {
+        // 未找到命令，用sds查找命令
         if (lookupCommandBySds(c->argv[0]->ptr)) {
             /* If we can't find the command but argv[0] by itself is a command
              * it means we're dealing with an invalid subcommand. Print Help. */
@@ -5243,10 +5245,14 @@ int processCommand(client *c) {
     int is_may_replicate_command = (c->cmd->flags & (CMD_WRITE | CMD_MAY_REPLICATE)) ||
                                    (c->cmd->proc == execCommand && (c->mstate.cmd_flags & (CMD_WRITE | CMD_MAY_REPLICATE)));
 
+    // 判断当前客户端是否已经授权过
     if (authRequired(c)) {
+        // 未授权过
         /* AUTH and HELLO and no auth commands are valid even in
          * non-authenticated state. */
+        // 判断当前命令是否无需授权
         if (!(c->cmd->flags & CMD_NO_AUTH)) {
+            // 当命令需要授权
             rejectCommand(c,shared.noautherr);
             return C_OK;
         }
@@ -5255,6 +5261,7 @@ int processCommand(client *c) {
     /* Check if the user can run this command according to the current
      * ACLs. */
     int acl_errpos;
+    // 检查当前用户是否拥有ACL权限
     int acl_retval = ACLCheckAllPerm(c,&acl_errpos);
     if (acl_retval != ACL_OK) {
         addACLLogEntry(c,acl_retval,(c->flags & CLIENT_MULTI) ? ACL_LOG_CTX_MULTI : ACL_LOG_CTX_TOPLEVEL,acl_errpos,NULL,NULL);
@@ -5285,6 +5292,9 @@ int processCommand(client *c) {
      * However we don't perform the redirection if:
      * 1) The sender of this command is our master.
      * 2) The command has no key arguments. */
+    // 如果启用了集群，请在此处执行集群重定向。但是，如果出现以下情况，我们不会执行重定向：
+    // 1) 此命令的发送者是我们的主人。
+    // 2) 该命令没有关键参数。
     if (server.cluster_enabled &&
         !(c->flags & CLIENT_MASTER) &&
         !(c->flags & CLIENT_LUA &&

@@ -2223,6 +2223,7 @@ int processInputBuffer(client *c) {
         }
 
         if (c->reqtype == PROTO_REQ_INLINE) {
+            // 注意这里是!=才会跳出循环，这里将缓冲区内的数据，转换后放入argv(重要)
             if (processInlineBuffer(c) != C_OK) break;
         } else if (c->reqtype == PROTO_REQ_MULTIBULK) {
             if (processMultibulkBuffer(c) != C_OK) break;
@@ -2234,6 +2235,7 @@ int processInputBuffer(client *c) {
         if (c->argc == 0) {
             resetClient(c);
         } else {
+            // 当前是IO线程，那么就执行到这为止，下面执行命令的步骤由main线程执行
             /* If we are in the context of an I/O thread, we can't really
              * execute the command here. All we can do is to flag the client
              * as one that needs to process the command. */
@@ -2244,6 +2246,7 @@ int processInputBuffer(client *c) {
             }
 
             /* We are finally ready to execute the command. */
+            // 开始准备执行command （重要）
             if (processCommandAndResetClient(c) == C_ERR) {
                 /* If the client is no longer valid, we avoid exiting this
                  * loop and trimming the client buffer later. So we return
@@ -2333,6 +2336,7 @@ void readQueryFromClient(connection *conn) {
         /* Append the query buffer to the pending (not applied) buffer
          * of the master. We'll use this buffer later in order to have a
          * copy of the string applied by the last command executed. */
+        // 如果当前客户端是master要讲正在写入的命令放入缓存中？？？TODO
         c->pending_querybuf = sdscatlen(c->pending_querybuf,
                                         c->querybuf+qblen,nread);
     }
@@ -2357,6 +2361,7 @@ void readQueryFromClient(connection *conn) {
 
     /* There is more data in the client input buffer, continue parsing it
      * and check if there is a full command to execute. */
+    // 处理输入缓冲区，执行命令（重要）
      if (processInputBuffer(c) == C_ERR)
          c = NULL;
 
@@ -3963,9 +3968,11 @@ int handleClientsWithPendingReadsUsingThreads(void) {
     }
 
     /* Also use the main thread to process a slice of clients. */
+    // main线程遍历所有客户端，执行客户端的命令
     listRewind(io_threads_list[0],&li);
     while((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
+        // 执行客户端命令（重要）
         readQueryFromClient(c->conn);
     }
     listEmpty(io_threads_list[0]);

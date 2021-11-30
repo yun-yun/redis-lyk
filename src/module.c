@@ -8471,7 +8471,7 @@ int RM_UnregisterCommandFilter(RedisModuleCtx *ctx, RedisModuleCommandFilter *fi
 
 void moduleCallCommandFilters(client *c) {
     if (listLength(moduleCommandFilters) == 0) return;
-
+// CommandFilter_CommandFilter
     listIter li;
     listNode *ln;
     listRewind(moduleCommandFilters,&li);
