@@ -2711,6 +2711,7 @@ int updateClientMemUsage(client *c) {
  * lists are global. The io-threads themselves track per-client memory usage in
  * updateClientMemUsage(). Here we update the clients to each bucket when all
  * io-threads are done (both for read and write io-threading). */
+// 更新内存使用桶中每个客户端的使用量，这样可以在后续驱逐内存使用量最大的客户端时使用
 void updateClientMemUsageBucket(client *c) {
     serverAssert(io_threads_op == IO_THREADS_OP_IDLE);
     int allow_eviction =
@@ -3365,6 +3366,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     handleBlockedClientsTimeout();
 
     /* We should handle pending reads clients ASAP after event loop. */
+    // 处理命令等（重要）
     handleClientsWithPendingReadsUsingThreads();
 
     /* Handle TLS pending data. (must be done before flushAppendOnlyFile) */
@@ -3387,6 +3389,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 
     /* Unblock all the clients blocked for synchronous replication
      * in WAIT. */
+    // TODO 主从复制
     if (listLength(server.clients_waiting_acks))
         processClientsWaitingReplicas();
 
@@ -3432,6 +3435,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     trackingBroadcastInvalidationMessages();
 
     /* Write the AOF buffer on disk */
+    // 将AOF缓存写入磁盘
     if (server.aof_state == AOF_ON)
         flushAppendOnlyFile(0);
 

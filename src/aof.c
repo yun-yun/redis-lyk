@@ -402,6 +402,7 @@ void flushAppendOnlyFile(int force) {
         if (server.aof_fsync == AOF_FSYNC_EVERYSEC &&
             server.aof_fsync_offset != server.aof_current_size &&
             server.unixtime > server.aof_last_fsync &&
+            // 当前aof fsync不在bio中执行
             !(sync_in_progress = aofFsyncInProgress())) {
             goto try_fsync;
         } else {
@@ -506,6 +507,7 @@ void flushAppendOnlyFile(int force) {
 
         /* Handle the AOF write error. */
         if (server.aof_fsync == AOF_FSYNC_ALWAYS) {
+            // 因为配置的是同步写入，AOF一旦出现问题，那么就必须异常退出，否则会导致客户端收到的结果和Redis持久化之间的数据不一致
             /* We can't recover when the fsync policy is ALWAYS since the reply
              * for the client is already in the output buffers (both writes and
              * reads), and the changes to the db can't be rolled back. Since we
@@ -561,18 +563,22 @@ try_fsync:
         /* Let's try to get this data on the disk. To guarantee data safe when
          * the AOF fsync policy is 'always', we should exit if failed to fsync
          * AOF (see comment next to the exit(1) after write error above). */
+        // 同步写入
         if (redis_fsync(server.aof_fd) == -1) {
-            serverLog(LL_WARNING,"Can't persist AOF for fsync error when the "
-              "AOF fsync policy is 'always': %s. Exiting...", strerror(errno));
+            serverLog(LL_WARNING, "Can't persist AOF for fsync error when the "
+                                  "AOF fsync policy is 'always': %s. Exiting...", strerror(errno));
             exit(1);
         }
         latencyEndMonitor(latency);
-        latencyAddSampleIfNeeded("aof-fsync-always",latency);
+        latencyAddSampleIfNeeded("aof-fsync-always", latency);
         server.aof_fsync_offset = server.aof_current_size;
         server.aof_last_fsync = server.unixtime;
-    } else if ((server.aof_fsync == AOF_FSYNC_EVERYSEC &&
-                server.unixtime > server.aof_last_fsync)) {
+    }
+        // 配置的是每秒写入
+    else if ((server.aof_fsync == AOF_FSYNC_EVERYSEC &&
+              server.unixtime > server.aof_last_fsync)) {
         if (!sync_in_progress) {
+            // 后台写入
             aof_background_fsync(server.aof_fd);
             server.aof_fsync_offset = server.aof_current_size;
         }
