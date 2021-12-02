@@ -165,13 +165,13 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
     }
     aeFileEvent *fe = &eventLoop->events[fd];
 
+    // 这里就是把当前事件放入待select的列表中
     if (aeApiAddEvent(eventLoop, fd, mask) == -1)
         return AE_ERR;
     fe->mask |= mask;
     if (mask & AE_READABLE) fe->rfileProc = proc;
     if (mask & AE_WRITABLE) fe->wfileProc = proc;
     fe->clientData = clientData;
-    // 这里就是把当前事件放入待select的列表中，
     if (fd > eventLoop->maxfd)
         eventLoop->maxfd = fd;
     return AE_OK;

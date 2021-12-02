@@ -3353,6 +3353,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
      * events to handle. */
     if (ProcessingEventsWhileBlocked) {
         uint64_t processed = 0;
+        // 将客户端分配给IO线程
         processed += handleClientsWithPendingReadsUsingThreads();
         processed += tlsProcessPendingData();
         processed += handleClientsWithPendingWrites();
@@ -3367,6 +3368,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 
     /* We should handle pending reads clients ASAP after event loop. */
     // 处理命令等（重要）
+    // 将客户端分配给IO线程
     handleClientsWithPendingReadsUsingThreads();
 
     /* Handle TLS pending data. (must be done before flushAppendOnlyFile) */
@@ -3445,6 +3447,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     handleClientsBlockedOnKeys();
 
     /* Handle writes with pending output buffers. */
+    // 处理客户端的写回事件
     handleClientsWithPendingWritesUsingThreads();
 
     /* Close clients that need to be closed asynchronous */
