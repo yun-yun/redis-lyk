@@ -746,6 +746,7 @@ static int getBlockedTypeByType(int type) {
  * made by a script or in the context of MULTI/EXEC.
  *
  * The list will be finally processed by handleClientsBlockedOnKeys() */
+// 标记key已经准备就绪，唤醒阻塞的客户端
 void signalKeyAsReady(redisDb *db, robj *key, int type) {
     readyList *rl;
 

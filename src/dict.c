@@ -213,6 +213,7 @@ int dictRehash(dict *d, int n) {
     int empty_visits = n*10; /* Max number of empty buckets to visit. */
     if (!dictIsRehashing(d)) return 0;
 
+    // 遍历n个槽位
     while(n-- && d->ht_used[0] != 0) {
         dictEntry *de, *nextde;
 
@@ -242,6 +243,7 @@ int dictRehash(dict *d, int n) {
     }
 
     /* Check if we already rehashed the whole table... */
+    // rehash结束了，将hashtable：1 设置为hashtable：0， hash结束
     if (d->ht_used[0] == 0) {
         zfree(d->ht_table[0]);
         /* Copy the new ht onto the old one */
@@ -254,6 +256,7 @@ int dictRehash(dict *d, int n) {
     }
 
     /* More to rehash... */
+    // 还没hash结束
     return 1;
 }
 

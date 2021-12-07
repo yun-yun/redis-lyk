@@ -1453,8 +1453,10 @@ void deleteExpiredKeyAndPropagate(redisDb *db, robj *keyobj) {
         dbSyncDelete(db,keyobj);
     latencyEndMonitor(expire_latency);
     latencyAddSampleIfNeeded("expire-del",expire_latency);
+    // 发布过期事件
     notifyKeyspaceEvent(NOTIFY_EXPIRED,"expired",keyobj,db->id);
     signalModifiedKey(NULL, db, keyobj);
+    // 传播key过期事件到AOF和从节点去
     propagateExpire(db,keyobj,server.lazyfree_lazy_expire);
     server.stat_expiredkeys++;
 }
@@ -1479,6 +1481,7 @@ void propagateExpire(redisDb *db, robj *key, int lazy) {
      * Even if module executed a command without asking for propagation. */
     int prev_replication_allowed = server.replication_allowed;
     server.replication_allowed = 1;
+    // 传播key过期事件到AOF和从节点去
     propagate(db->id,argv,2,PROPAGATE_AOF|PROPAGATE_REPL);
     server.replication_allowed = prev_replication_allowed;
 
@@ -1501,6 +1504,7 @@ int keyIsExpired(redisDb *db, robj *key) {
      * only the first time it is accessed and not in the middle of the
      * script execution, making propagation to slaves / AOF consistent.
      * See issue #1525 on Github for more information. */
+    // 在lua脚本中，秘钥只能在第一次访问时过期，而不能在lua脚本执行过程中过期
     if (server.lua_caller) {
         now = server.lua_time_snapshot;
     }
