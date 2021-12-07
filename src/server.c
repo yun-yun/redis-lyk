@@ -3352,6 +3352,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
      * events to handle. */
     if (ProcessingEventsWhileBlocked) {
         uint64_t processed = 0;
+        // 处理已经准备好的命令
         processed += handleClientsWithPendingReadsUsingThreads();
         processed += tlsProcessPendingData();
         processed += handleClientsWithPendingWrites();
@@ -3365,6 +3366,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     handleBlockedClientsTimeout();
 
     /* We should handle pending reads clients ASAP after event loop. */
+    //
     handleClientsWithPendingReadsUsingThreads();
 
     /* Handle TLS pending data. (must be done before flushAppendOnlyFile) */
@@ -4920,6 +4922,7 @@ void call(client *c, int flags) {
     server.in_nested_call++;
 
     elapsedStart(&call_timer);
+    // 执行命令
     c->cmd->proc(c);
     const long duration = elapsedUs(call_timer);
     c->duration = duration;
@@ -5304,6 +5307,7 @@ int processCommand(client *c) {
     {
         int hashslot;
         int error_code;
+        // 需要重定向到的集群节点
         clusterNode *n = getNodeByQuery(c,c->cmd,c->argv,c->argc,
                                         &hashslot,&error_code);
         if (n == NULL || n != server.cluster->myself) {
@@ -5496,7 +5500,7 @@ int processCommand(client *c) {
         return C_OK;       
     }
 
-    /* Exec the command */
+    /* Exec the command 执行命令 */
     if (c->flags & CLIENT_MULTI &&
         c->cmd->proc != execCommand &&
         c->cmd->proc != discardCommand &&

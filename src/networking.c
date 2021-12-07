@@ -127,7 +127,7 @@ client *createClient(connection *conn) {
         connEnableTcpNoDelay(conn);
         if (server.tcpkeepalive)
             connKeepAlive(conn,server.tcpkeepalive);
-        // 设置读取的handler
+        // 设置读取的handler，并将conn放入IO多路复用选择器中
         connSetReadHandler(conn, readQueryFromClient);
         connSetPrivateData(conn, c);
     }
@@ -1648,6 +1648,7 @@ int writeToClient(client *c, int handler_installed) {
     ssize_t nwritten = 0, totwritten = 0;
 
     while(clientHasPendingReplies(c)) {
+        // 写入客户端
         int ret = _writeToClient(c, &nwritten);
         if (ret == C_ERR) break;
         totwritten += nwritten;
