@@ -366,6 +366,7 @@ void _addReplyToBufferOrList(client *c, const char *s, size_t len) {
 
 /* Add the object 'obj' string representation to the client output buffer. */
 void addReply(client *c, robj *obj) {
+    // 准备客户端写入
     if (prepareClientToWrite(c) != C_OK) return;
 
     if (sdsEncodedObject(obj)) {
@@ -3954,6 +3955,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
     listNode *ln;
     listRewind(server.clients_pending_read,&li);
     int item_id = 0;
+    // 将已激活的客户端放入IO线程list中
     while((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
         int target_id = item_id % server.io_threads_num;
@@ -3964,13 +3966,14 @@ int handleClientsWithPendingReadsUsingThreads(void) {
     /* Give the start condition to the waiting threads, by setting the
      * start condition atomic var. */
     io_threads_op = IO_THREADS_OP_READ;
+    // 提醒IO线程，有客户端需要处理
     for (int j = 1; j < server.io_threads_num; j++) {
         int count = listLength(io_threads_list[j]);
         setIOPendingCount(j, count);
     }
 
     /* Also use the main thread to process a slice of clients. */
-    // main线程遍历所有客户端，执行客户端的命令
+    // 第0个是Main线程，此时main线程读取数据指向命令
     listRewind(io_threads_list[0],&li);
     while((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
@@ -3980,6 +3983,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
     listEmpty(io_threads_list[0]);
 
     /* Wait for all the other threads to end their work. */
+    // 等等其他线程结束工作
     while(1) {
         unsigned long pending = 0;
         for (int j = 1; j < server.io_threads_num; j++)
@@ -3989,6 +3993,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
 
     io_threads_op = IO_THREADS_OP_IDLE;
 
+    // 此时所有IO线程读取完了所有数据，此时需要再次检查是否有还没执行的命令
     /* Run the list of clients again to process the new buffers. */
     while(listLength(server.clients_pending_read)) {
         ln = listFirst(server.clients_pending_read);
@@ -4008,6 +4013,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
         /* Once io-threads are idle we can update the client in the mem usage buckets */
         updateClientMemUsageBucket(c);
 
+        //处理已经准备好的客户端命令
         if (processPendingCommandsAndResetClient(c) == C_ERR) {
             /* If the client is no longer valid, we avoid
              * processing the client later. So we just go
@@ -4015,6 +4021,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
             continue;
         }
 
+        // 再看看客户端有没有还未读取的数据，在这读取数据并执行命令
         if (processInputBuffer(c) == C_ERR) {
             /* If the client is no longer valid, we avoid
              * processing the client later. So we just go
@@ -4025,6 +4032,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
         /* We may have pending replies if a thread readQueryFromClient() produced
          * replies and did not install a write handler (it can't).
          */
+        // 如果客户端有数据待回复，但是不是待写入状态，此时在这会将其设置为待写入，并放入待写回链表
         if (!(c->flags & CLIENT_PENDING_WRITE) && clientHasPendingReplies(c))
             clientInstallWriteHandler(c);
     }
