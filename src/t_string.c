@@ -90,6 +90,7 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
 
     found = (lookupKeyWrite(c->db,key) != NULL);
 
+    // 不能设置值
     if ((flags & OBJ_SET_NX && found) ||
         (flags & OBJ_SET_XX && !found))
     {
@@ -288,10 +289,11 @@ void setCommand(client *c) {
     int unit = UNIT_SECONDS;
     int flags = OBJ_NO_FLAGS;
 
+    // 解析NX XX 等命令参数
     if (parseExtendedStringArgumentsOrReply(c,&flags,&unit,&expire,COMMAND_SET) != C_OK) {
         return;
     }
-
+    // 对value进行编码
     c->argv[2] = tryObjectEncoding(c->argv[2]);
     setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
 }
