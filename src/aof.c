@@ -579,7 +579,7 @@ try_fsync:
     else if ((server.aof_fsync == AOF_FSYNC_EVERYSEC &&
               server.unixtime > server.aof_last_fsync)) {
         if (!sync_in_progress) {
-            // 后台写入
+            // 后台写入强制
             aof_background_fsync(server.aof_fd);
             server.aof_fsync_offset = server.aof_current_size;
         }

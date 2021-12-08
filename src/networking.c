@@ -1896,6 +1896,7 @@ int processInlineBuffer(client *c) {
 
     /* Create redis objects for all arguments. */
     for (c->argc = 0, j = 0; j < argc; j++) {
+        // 创建sds对象
         c->argv[c->argc] = createObject(OBJ_STRING,argv[j]);
         c->argc++;
         c->argv_len_sum += sdslen(argv[j]);
@@ -2085,6 +2086,7 @@ int processMultibulkBuffer(client *c) {
                 c->querybuf = sdsnewlen(SDS_NOINIT,c->bulklen+2);
                 sdsclear(c->querybuf);
             } else {
+                // 将argv转换为string对象
                 c->argv[c->argc++] =
                     createStringObject(c->querybuf+c->qb_pos,c->bulklen);
                 c->argv_len_sum += c->bulklen;
