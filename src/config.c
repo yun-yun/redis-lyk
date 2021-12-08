@@ -2387,6 +2387,7 @@ static sds getConfigClientOutputBufferLimitOption(typeData data) {
 static int setConfigOOMScoreAdjValuesOption(typeData data, sds *argv, int argc, const char **err) {
     int i;
     int values[CONFIG_OOM_COUNT];
+    int change = 0;
     UNUSED(data);
 
     if (argc != CONFIG_OOM_COUNT) {
@@ -2419,10 +2420,13 @@ static int setConfigOOMScoreAdjValuesOption(typeData data, sds *argv, int argc, 
     }
 
     for (i = 0; i < CONFIG_OOM_COUNT; i++) {
-        server.oom_score_adj_values[i] = values[i];
+        if (server.oom_score_adj_values[i] != values[i]) {
+            server.oom_score_adj_values[i] = values[i];
+            change = 1;
+        }
     }
 
-    return 1;
+    return change ? 1 : 2;
 }
 
 static sds getConfigOOMScoreAdjValuesOption(typeData data) {
@@ -2650,7 +2654,7 @@ standardConfig configs[] = {
     createULongConfig("acllog-max-len", NULL, MODIFIABLE_CONFIG, 0, LONG_MAX, server.acllog_max_len, 128, INTEGER_CONFIG, NULL, NULL),
 
     /* Long Long configs */
-    createLongLongConfig("lua-time-limit", NULL, MODIFIABLE_CONFIG, 0, LONG_MAX, server.lua_time_limit, 5000, INTEGER_CONFIG, NULL, NULL),/* milliseconds */
+    createLongLongConfig("script-time-limit", "lua-time-limit", MODIFIABLE_CONFIG, 0, LONG_MAX, server.script_time_limit, 5000, INTEGER_CONFIG, NULL, NULL),/* milliseconds */
     createLongLongConfig("cluster-node-timeout", NULL, MODIFIABLE_CONFIG, 0, LLONG_MAX, server.cluster_node_timeout, 15000, INTEGER_CONFIG, NULL, NULL),
     createLongLongConfig("slowlog-log-slower-than", NULL, MODIFIABLE_CONFIG, -1, LLONG_MAX, server.slowlog_log_slower_than, 10000, INTEGER_CONFIG, NULL, NULL),
     createLongLongConfig("latency-monitor-threshold", NULL, MODIFIABLE_CONFIG, 0, LLONG_MAX, server.latency_monitor_threshold, 0, INTEGER_CONFIG, NULL, NULL),
