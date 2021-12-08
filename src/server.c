@@ -3035,6 +3035,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     if (server.watchdog_period) watchdogScheduleSignal(server.watchdog_period);
 
     /* Update the time cache. */
+    // 更新缓存的时间
     updateCachedTime(1);
 
     server.hz = server.config_hz;
@@ -3081,6 +3082,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     unsigned int lruclock = getLRUClock();
     atomicSet(server.lruclock,lruclock);
 
+    // TODO 定时更新内存状态
     cronUpdateMemoryStats();
 
     /* We received a SIGTERM, shutting down here in a safe way, as it is
@@ -3122,6 +3124,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     clientsCron();
 
     /* Handle background operations on Redis databases. */
+    // 活动密钥过期、调整大小、重新散列。
     databasesCron();
 
     /* Start a scheduled AOF rewrite if this was requested by the user while
@@ -5343,7 +5346,9 @@ int processCommand(client *c) {
      * the event loop since there is a busy Lua script running in timeout
      * condition, to avoid mixing the propagation of scripts with the
      * propagation of DELs due to eviction. */
+    // 内存检查
     if (server.maxmemory && !server.lua_timedout) {
+        // 内存淘汰
         int out_of_memory = (performEvictions() == EVICT_FAIL);
 
         /* performEvictions may evict keys, so we need flush pending tracking

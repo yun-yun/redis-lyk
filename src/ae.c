@@ -459,6 +459,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
         }
     }
     /* Check time events */
+    // 遍历时间时间，做一些定时的处理
     if (flags & AE_TIME_EVENTS)
         processed += processTimeEvents(eventLoop);
 
