@@ -53,6 +53,7 @@ typedef struct dictEntry {
         double d;
     } v;
     struct dictEntry *next;     /* Next entry in the same hash bucket. */
+    // 一些特殊的元数据，比如集群元数据clusterDictEntryMetadata
     void *metadata[];           /* An arbitrary number of bytes (starting at a
                                  * pointer-aligned address) of size as returned
                                  * by dictType's dictEntryMetadataBytes(). */

@@ -312,8 +312,11 @@ static int dbGenericDelete(redisDb *db, robj *key, int async) {
         robj *val = dictGetVal(de);
         /* Tells the module that the key has been unlinked from the database. */
         moduleNotifyKeyUnlink(key,val,db->id);
+        // TODO 异步体现在哪？
         if (async) {
             freeObjAsync(key, val, db->id);
+            // 在这将de设置为NULL，那么下一步的dictFreeUnlinkedEntry就不会执行，
+            // 那么就会由上一步的异步任务进行释放
             dictSetVal(db->dict, de, NULL);
         }
         if (server.cluster_enabled) slotToKeyDelEntry(de, db);
