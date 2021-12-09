@@ -341,8 +341,10 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
      * more frequently. */
     htidx = dictIsRehashing(d) ? 1 : 0;
     size_t metasize = dictMetadataSize(d);
+    // 分配内存创建一个新的entry，并插入db中
     entry = zmalloc(sizeof(*entry) + metasize);
     if (metasize > 0) {
+        // 初始化内存空间
         memset(dictMetadata(entry), 0, metasize);
     }
     entry->next = d->ht_table[htidx][index];

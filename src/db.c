@@ -93,7 +93,7 @@ robj *lookupKey(redisDb *db, robj *key, int flags) {
             client *c = server.in_script ? scriptGetClient() : server.current_client;
             serverAssert(!c || !c->cmd || (c->cmd->flags & (CMD_WRITE|CMD_MODULE)));
         }
-        // 判断key是否
+        // 判断key是否过期，如果过期根据参数来判断是否需要删除
         if (expireIfNeeded(db, key, force_delete_expired)) {
             /* The key is no longer valid. */
             val = NULL;

@@ -80,8 +80,10 @@ unsigned int getLRUClock(void) {
 unsigned int LRU_CLOCK(void) {
     unsigned int lruclock;
     if (1000/server.hz <= LRU_CLOCK_RESOLUTION) {
+        // 如果服务hz太大，那么就能使用缓存的server.lruclock
         atomicGet(server.lruclock,lruclock);
     } else {
+        // 如果服务hz太小，那么就需要实时获取当前时间
         lruclock = getLRUClock();
     }
     return lruclock;
@@ -529,6 +531,7 @@ static unsigned long evictionTimeLimitUs() {
  *   EVICT_RUNNING  - memory is over the limit, but eviction is still processing
  *   EVICT_FAIL     - memory is over the limit, and there's nothing to evict
  * */
+// 执行内存淘汰
 int performEvictions(void) {
     /* Note, we don't goto update_metrics here because this check skips eviction
      * as if it wasn't triggered. it's a fake EVICT_OK. */
@@ -547,6 +550,7 @@ int performEvictions(void) {
         goto update_metrics;
     }
 
+    // 禁止淘汰key
     if (server.maxmemory_policy == MAXMEMORY_NO_EVICTION) {
         result = EVICT_FAIL;  /* We need to free memory, but policy forbids. */
         goto update_metrics;
