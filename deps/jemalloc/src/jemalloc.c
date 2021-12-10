@@ -2320,6 +2320,7 @@ malloc_default(size_t size) {
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
 void JEMALLOC_NOTHROW *
 JEMALLOC_ATTR(malloc) JEMALLOC_ALLOC_SIZE(1)
+// TODO 内存分配
 je_malloc(size_t size) {
 	LOG("core.malloc.entry", "size: %zu", size);
 

@@ -4853,6 +4853,7 @@ struct redisCommand *lookupCommandOrOriginal(robj **argv ,int argc) {
  * want to use propagate().
  */
 void propagate(int dbid, robj **argv, int argc, int flags) {
+    // TODO 不允许复制，就不能打印AOF日志了？
     if (!server.replication_allowed)
         return;
 
@@ -5106,6 +5107,7 @@ void call(client *c, int flags) {
          * propagation is needed. Note that modules commands handle replication
          * in an explicit way, so we never replicate them automatically. */
         if (propagate_flags != PROPAGATE_NONE && !(c->cmd->flags & CMD_MODULE))
+            // 将命令传播给AOF和从节点
             propagate(c->db->id,c->argv,c->argc,propagate_flags);
     }
 
