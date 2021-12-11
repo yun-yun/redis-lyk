@@ -3178,6 +3178,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
     /* Start a scheduled AOF rewrite if this was requested by the user while
      * a BGSAVE was in progress. */
+    // 当调用了BGSAVE后，会在这进行一次重写
     if (!hasActiveChildProcess() &&
         server.aof_rewrite_scheduled)
     {
