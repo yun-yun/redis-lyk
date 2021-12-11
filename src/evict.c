@@ -150,6 +150,7 @@ void evictionPoolPopulate(int dbid, dict *sampledict, dict *keydict, struct evic
     dictEntry *samples[server.maxmemory_samples];
 
     count = dictGetSomeKeys(sampledict,samples,server.maxmemory_samples);
+    // 插入排序
     for (j = 0; j < count; j++) {
         unsigned long long idle;
         sds key;
@@ -565,6 +566,7 @@ int performEvictions(void) {
     monotime evictionTimer;
     elapsedStart(&evictionTimer);
 
+    // 已经释放的内存 小于 要释放的内存则继续释放
     while (mem_freed < (long long)mem_tofree) {
         int j, k, i;
         static unsigned int next_db = 0;
@@ -574,22 +576,29 @@ int performEvictions(void) {
         dict *dict;
         dictEntry *de;
 
+        // 如果当前是LRU 或 LFU 或 TTl算法
         if (server.maxmemory_policy & (MAXMEMORY_FLAG_LRU|MAXMEMORY_FLAG_LFU) ||
             server.maxmemory_policy == MAXMEMORY_VOLATILE_TTL)
         {
             struct evictionPoolEntry *pool = EvictionPoolLRU;
 
+            // 挑选key
             while(bestkey == NULL) {
                 unsigned long total_keys = 0, keys;
 
                 /* We don't want to make local-db choices when expiring keys,
                  * so to start populate the eviction pool sampling keys from
                  * every DB. */
+                //
                 for (i = 0; i < server.dbnum; i++) {
+                    // 选择db
                     db = server.db+i;
+                    // 根据策略选择所有key还是超时key
                     dict = (server.maxmemory_policy & MAXMEMORY_FLAG_ALLKEYS) ?
                             db->dict : db->expires;
                     if ((keys = dictSize(dict)) != 0) {
+
+                        // 对dict进行采样， 放入pool中
                         evictionPoolPopulate(i, dict, db->dict, pool);
                         total_keys += keys;
                     }
@@ -597,6 +606,7 @@ int performEvictions(void) {
                 if (!total_keys) break; /* No keys to evict. */
 
                 /* Go backward from best to worst element to evict. */
+//                对池中已经排好序的采样的key
                 for (k = EVPOOL_SIZE-1; k >= 0; k--) {
                     if (pool[k].key == NULL) continue;
                     bestdbid = pool[k].dbid;
@@ -640,6 +650,7 @@ int performEvictions(void) {
                 dict = (server.maxmemory_policy == MAXMEMORY_ALLKEYS_RANDOM) ?
                         db->dict : db->expires;
                 if (dictSize(dict) != 0) {
+                    // 随机选取一个dictEntry
                     de = dictGetRandomKey(dict);
                     bestkey = dictGetKey(de);
                     bestdbid = j;
@@ -652,6 +663,7 @@ int performEvictions(void) {
         if (bestkey) {
             db = server.db+bestdbid;
             robj *keyobj = createStringObject(bestkey,sdslen(bestkey));
+            // 传播key的过期事件
             propagateExpire(db,keyobj,server.lazyfree_lazy_eviction);
             /* We compute the amount of memory freed by db*Delete() alone.
              * It is possible that actually the memory needed to propagate

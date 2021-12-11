@@ -443,6 +443,7 @@ void flushAppendOnlyFile(int force) {
      * or alike */
 
     if (server.aof_flush_sleep && sdslen(server.aof_buf)) {
+        // 在aof写入前，睡眠一段时间？
         usleep(server.aof_flush_sleep);
     }
 
@@ -466,6 +467,7 @@ void flushAppendOnlyFile(int force) {
     /* We performed the write so reset the postponed flush sentinel to zero. */
     server.aof_flush_postponed_start = 0;
 
+    // 如果并未完全写入
     if (nwritten != (ssize_t)sdslen(server.aof_buf)) {
         static time_t last_write_error_log = 0;
         int can_log = 0;
@@ -646,6 +648,7 @@ void feedAppendOnlyFile(int dictid, robj **argv, int argc) {
 
     /* The DB this command was targeting is not the same as the last command
      * we appended. To issue a SELECT command is needed. */
+    // 当前AOF文件中记录的DB不是当前命令要插入的DB，为了重放AOF时，能插入正确DB，需要追加一个SELECT命令
     if (dictid != server.aof_selected_db) {
         char seldb[64];
 
@@ -657,6 +660,7 @@ void feedAppendOnlyFile(int dictid, robj **argv, int argc) {
 
     /* All commands should be propagated the same way in AOF as in replication.
      * No need for AOF-specific translation. */
+    //将命令转换成特定的格式
     buf = catAppendOnlyGenericCommand(buf,argc,argv);
 
     /* Append to the AOF buffer. This will be flushed on disk just before
