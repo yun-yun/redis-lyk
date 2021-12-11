@@ -196,6 +196,7 @@ void aofRewriteBufferAppend(unsigned char *s, unsigned long len) {
     if (!server.aof_stop_sending_diff &&
         aeGetFileEvents(server.el,server.aof_pipe_write_data_to_child) == 0)
     {
+        // 添加一个IO事件，当父子进程的管道可写时，会执行aofChildWriteDiffData方法
         aeCreateFileEvent(server.el, server.aof_pipe_write_data_to_child,
             AE_WRITABLE, aofChildWriteDiffData, NULL);
     }
