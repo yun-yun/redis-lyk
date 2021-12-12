@@ -1533,7 +1533,9 @@ struct redisServer {
     redisAtomic int aof_bio_fsync_status; /* Status of AOF fsync in bio job. */
     redisAtomic int aof_bio_fsync_errno;  /* Errno of AOF fsync in bio job. */
     /* AOF pipes used to communicate between parent and child during rewrite. */
+    // 这是AOF 父子进程管道，用于发送子进程的文件句柄
     int aof_pipe_write_data_to_child;
+    // 这是AOF 父子进程管道，用于接收父进程的文件句柄
     int aof_pipe_read_data_from_parent;
     int aof_pipe_write_ack_to_parent;
     int aof_pipe_read_ack_from_child;
