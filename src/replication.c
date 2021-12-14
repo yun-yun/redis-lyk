@@ -380,6 +380,7 @@ void feedReplicationBuffer(char *s, size_t len) {
 
         /* Update shared replication buffer start position. */
         if (slave->ref_repl_buf_node == NULL) {
+            // 更新将要写入Slave的Node
             slave->ref_repl_buf_node = start_node;
             slave->ref_block_pos = start_pos;
             /* Only increase the start block reference count. */
@@ -1029,6 +1030,7 @@ void syncCommand(client *c) {
              * another slave. Set the right state, and copy the buffer.
              * We don't copy buffer if clients don't want. */
             if (!(c->flags & CLIENT_REPL_RDBONLY))
+//                将dst->ref_repl_buf_node = src->ref_repl_buf_node;
                 copyReplicaOutputBuffer(c,slave);
             replicationSetupSlaveForFullResync(c,slave->psync_initial_offset);
             serverLog(LL_NOTICE,"Waiting for end of BGSAVE for SYNC");
@@ -1199,6 +1201,7 @@ void replconfCommand(client *c) {
  *    command disables it, so that we can accumulate output buffer without
  *    sending it to the replica.
  * 4) Update the count of "good replicas". */
+// 设置Slave在线，并安装回复Handler
 void putSlaveOnline(client *slave) {
     slave->replstate = SLAVE_STATE_ONLINE;
     slave->repl_put_online_on_ack = 0;
@@ -1211,6 +1214,7 @@ void putSlaveOnline(client *slave) {
         freeClientAsync(slave);
         return;
     }
+    // 设置回复Handler
     if (connSetWriteHandler(slave->conn, sendReplyToClient) == C_ERR) {
         serverLog(LL_WARNING,"Unable to register writable event for replica bulk transfer: %s", strerror(errno));
         freeClient(slave);
@@ -3714,6 +3718,7 @@ void replicationCron(void) {
      * must be referenced by someone, since it will be freed when not referenced,
      * otherwise, server will OOM. also, its refcount must not be more than
      * replicas number + 1(replication backlog). */
+    // 检查第一个server.repl_buffer_blocks节点，如果没人引用它，就要释放掉
     if (listLength(server.repl_buffer_blocks) > 0) {
         replBufBlock *o = listNodeValue(listFirst(server.repl_buffer_blocks));
         serverAssert(o->refcount > 0 &&

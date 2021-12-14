@@ -1571,6 +1571,7 @@ client *lookupClientByID(uint64_t id) {
  * to client. */
 int _writeToClient(client *c, ssize_t *nwritten) {
     *nwritten = 0;
+    // 如果客户端类型是Slave，就从公共的缓冲区读取数据并返回
     if (getClientType(c) == CLIENT_TYPE_SLAVE) {
         serverAssert(c->bufpos == 0 && listLength(c->reply) == 0);
 
@@ -3511,6 +3512,7 @@ int closeClientOnOutputBufferLimitReached(client *c, int async) {
  * output buffers without returning control to the event loop.
  * This is also called by SHUTDOWN for a best-effort attempt to send
  * slaves the latest writes. */
+// 清空从节点的输出缓存
 void flushSlavesOutputBuffers(void) {
     listIter li;
     listNode *ln;
