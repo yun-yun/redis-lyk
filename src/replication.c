@@ -3565,6 +3565,7 @@ void replicationCron(void) {
     /* Send ACK to master from time to time.
      * Note that we do not send periodic acks to masters that don't
      * support PSYNC and replication offsets. */
+    // 当前是从节点，就时不时发送ACK给主节点
     if (server.masterhost && server.master &&
         !(server.master->flags & CLIENT_PRE_PSYNC))
         replicationSendAck();
@@ -3578,6 +3579,7 @@ void replicationCron(void) {
     robj *ping_argv[1];
 
     /* First, send PING according to ping_slave_period. */
+    // 给自己的从节点发送PING，从节点也可以有自己的从节点
     if ((replication_cron_loops % server.repl_ping_slave_period) == 0 &&
         listLength(server.slaves))
     {
@@ -3592,6 +3594,7 @@ void replicationCron(void) {
             checkClientPauseTimeoutAndReturnIfPaused();
 
         if (!manual_failover_in_progress) {
+//            发送PING给自己的从节点
             ping_argv[0] = shared.ping;
             replicationFeedSlaves(server.slaves, server.slaveseldb,
                 ping_argv, 1);
@@ -3612,6 +3615,11 @@ void replicationCron(void) {
      * last interaction timer preventing a timeout. In this case we ignore the
      * ping period and refresh the connection once per second since certain
      * timeouts are set at a few seconds (example: PSYNC response). */
+    /*
+     * 在预同步阶段给自己所有的Slave发送一个换行符，这时候Slave正在等待Master创建RDB文件
+     * 如果我们自己也是从节点，那么我们还是要告诉自己的从节点：他们的master是活着的
+     * 换行符会被忽略，它对偏移量没有影响，但是会让连接不会超时
+     */
     listRewind(server.slaves,&li);
     while((ln = listNext(&li))) {
         client *slave = ln->value;
@@ -3627,6 +3635,7 @@ void replicationCron(void) {
     }
 
     /* Disconnect timedout slaves. */
+    // 从节点超时了，断开连接
     if (listLength(server.slaves)) {
         listIter li;
         listNode *ln;
