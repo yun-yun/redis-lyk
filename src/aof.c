@@ -1560,6 +1560,7 @@ int rewriteAppendOnlyFile(char *filename) {
 
     startSaving(RDBFLAGS_AOF_PREAMBLE);
 
+    // RDB + AOF
     if (server.aof_use_rdb_preamble) {
         int error;
         if (rdbSaveRio(&aof,&error,RDBFLAGS_AOF_PREAMBLE,NULL) == C_ERR) {
@@ -1581,6 +1582,7 @@ int rewriteAppendOnlyFile(char *filename) {
      * some more data in a loop as soon as there is a good chance more data
      * will come. If it looks like we are wasting time, we abort (this
      * happens after 20 ms without new data). */
+    // 从父进程读取
     int nodata = 0;
     mstime_t start = mstime();
     while(mstime()-start < 1000 && nodata < 20) {
@@ -1595,6 +1597,7 @@ int rewriteAppendOnlyFile(char *filename) {
     }
 
     /* Ask the master to stop sending diffs. */
+    // 通知父进程，停止发送数据
     if (write(server.aof_pipe_write_ack_to_parent,"!",1) != 1) goto werr;
     if (anetNonBlock(NULL,server.aof_pipe_read_ack_from_parent) != ANET_OK)
         goto werr;
@@ -1606,6 +1609,7 @@ int rewriteAppendOnlyFile(char *filename) {
     serverLog(LL_NOTICE,"Parent agreed to stop sending diffs. Finalizing AOF...");
 
     /* Read the final diff if any. */
+    // 读取剩余的数据
     aofReadDiffFromParent();
 
     /* Write the received diff to the file. */

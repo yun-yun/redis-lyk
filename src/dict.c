@@ -527,6 +527,7 @@ dictEntry *dictFind(dict *d, const void *key)
                 return he;
             he = he->next;
         }
+        // 如果正在rehash，就去ht1找找，否则ht1是没数据的，返回NULL
         if (!dictIsRehashing(d)) return NULL;
     }
     return NULL;

@@ -144,6 +144,7 @@ static int dictAdd(dict *ht, void *key, void *val) {
 
     /* Get the index of the new element, or -1 if
      * the element already exists. */
+    // 获取key的index，如果需要的话，对key进行扩容
     if ((index = _dictKeyIndex(ht, key)) == -1)
         return DICT_ERR;
 

@@ -3160,6 +3160,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
     /* Show information about connected clients */
     if (!server.sentinel_mode) {
+        // 每5000毫秒执行一次
         run_with_period(5000) {
             serverLog(LL_DEBUG,
                 "%lu clients connected (%lu replicas), %zu bytes in use",
@@ -3188,6 +3189,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* Check if a background saving or AOF rewrite in progress terminated. */
     if (hasActiveChildProcess() || ldbPendingChildren())
     {
+        // 每1000毫秒执行一次
         run_with_period(1000) receiveChildInfo();
         checkChildrenDone();
     } else {
@@ -3215,6 +3217,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
             }
         }
 
+        // 计算当前的AOF大小，和上一次的大小
         /* Trigger an AOF rewrite if needed. */
         if (server.aof_state == AOF_ON &&
             !hasActiveChildProcess() &&
@@ -3244,6 +3247,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
      * clear the AOF error in case of success to make the DB writable again,
      * however to try every second is enough in case of 'hz' is set to
      * a higher frequency. */
+    // 每1000毫秒执行一次
     run_with_period(1000) {
         if (server.aof_state == AOF_ON && server.aof_last_write_status == C_ERR)
             flushAppendOnlyFile(0);
@@ -3258,6 +3262,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
      * If Redis is trying to failover then run the replication cron faster so
      * progress on the handshake happens more quickly. */
     if (server.failover_state != NO_FAILOVER) {
+        // 每100毫秒执行一次
         run_with_period(100) replicationCron();
     } else {
         run_with_period(1000) replicationCron();
@@ -5079,6 +5084,7 @@ void call(client *c, int flags) {
     }
 
     /* Propagate the command into the AOF and replication link */
+    // 将命令传播进AOF和从节点
     if (flags & CMD_CALL_PROPAGATE &&
         (c->flags & CLIENT_PREVENT_PROP) != CLIENT_PREVENT_PROP)
     {
