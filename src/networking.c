@@ -1245,18 +1245,6 @@ void freeClientArgv(client *c) {
     c->argv = NULL;
 }
 
-/* Close all the slaves connections. This is useful in chained replication
- * when we resync with our own master and want to force all our slaves to
- * resync with us as well. */
-void disconnectSlaves(void) {
-    listIter li;
-    listNode *ln;
-    listRewind(server.slaves,&li);
-    while((ln = listNext(&li))) {
-        freeClient((client*)ln->value);
-    }
-}
-
 /* Check if there is any other slave waiting dumping RDB finished expect me.
  * This function is useful to judge current dumping RDB can be used for full
  * synchronization or not. */
@@ -1343,6 +1331,18 @@ void unlinkClient(client *c) {
 
     /* Clear the tracking status. */
     if (c->flags & CLIENT_TRACKING) disableTracking(c);
+}
+
+/* Close all the slaves connections. This is useful in chained replication
+ * when we resync with our own master and want to force all our slaves to
+ * resync with us as well. */
+void disconnectSlaves(void) {
+    listIter li;
+    listNode *ln;
+    listRewind(server.slaves,&li);
+    while((ln = listNext(&li))) {
+        freeClient((client*)ln->value);
+    }
 }
 
 void freeClient(client *c) {

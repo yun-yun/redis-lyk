@@ -913,6 +913,7 @@ void syncCommand(client *c) {
         }
 
         if (!strcasecmp(c->argv[1]->ptr,server.replid)) {
+//            将从节点变为主节点
             replicationUnsetMaster();
             sds client = catClientInfoString(sdsempty(),c);
             serverLog(LL_NOTICE,
