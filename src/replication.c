@@ -700,6 +700,7 @@ int replicationSetupSlaveForFullResync(client *slave, long long offset) {
  *
  * On success return C_OK, otherwise C_ERR is returned and we proceed
  * with the usual full resync. */
+// 主从增量同步
 int masterTryPartialResynchronization(client *c) {
     long long psync_offset, psync_len;
     char *master_replid = c->argv[1]->ptr;
@@ -2299,6 +2300,7 @@ char *sendCommandArgv(connection *conn, int argc, char **argv, size_t *argv_lens
 #define PSYNC_FULLRESYNC 3
 #define PSYNC_NOT_SUPPORTED 4
 #define PSYNC_TRY_LATER 5
+// 主从增量同步
 int slaveTryPartialResynchronization(connection *conn, int read_reply) {
     char *psync_replid;
     char psync_offset[32];
@@ -2470,6 +2472,7 @@ void syncWithMaster(connection *conn) {
 
     /* If this event fired after the user turned the instance into a master
      * with SLAVEOF NO ONE we must just return ASAP. */
+    // 如果设置为不需要连接，由调用了该方法，则尽快返回
     if (server.repl_state == REPL_STATE_NONE) {
         connClose(conn);
         return;
@@ -2667,6 +2670,7 @@ void syncWithMaster(connection *conn) {
         goto error;
     }
 
+    // slave尝试PSYNC
     psync_result = slaveTryPartialResynchronization(conn,1);
     if (psync_result == PSYNC_WAIT_REPLY) return; /* Try again later... */
 
@@ -3556,6 +3560,7 @@ void replicationCron(void) {
     }
 
     /* Check if we should connect to a MASTER */
+    // 判断状态，连接Master
     if (server.repl_state == REPL_STATE_CONNECT) {
         serverLog(LL_NOTICE,"Connecting to MASTER %s:%d",
             server.masterhost, server.masterport);
