@@ -379,6 +379,7 @@ void feedReplicationBuffer(char *s, size_t len) {
         if (!canFeedReplicaReplBuffer(slave)) continue;
 
         /* Update shared replication buffer start position. */
+        // 如果slave->ref_repl_buf_node为空代表都读写完毕，写入最新的节点
         if (slave->ref_repl_buf_node == NULL) {
             // 更新将要写入Slave的Node
             slave->ref_repl_buf_node = start_node;
@@ -388,10 +389,12 @@ void feedReplicationBuffer(char *s, size_t len) {
         }
 
         /* Check output buffer limit only when add new block. */
+        // 如果slave跟不上复制，则关闭
         if (add_new_block) closeClientOnOutputBufferLimitReached(slave, 1);
     }
 
     /* For replication backlog */
+    // 只是做个指针用
     if (server.repl_backlog->ref_repl_buf_node == NULL) {
         server.repl_backlog->ref_repl_buf_node = start_node;
         /* Only increase the start block reference count. */
@@ -1005,6 +1008,7 @@ void syncCommand(client *c) {
     }
 
     /* CASE 1: BGSAVE is in progress, with disk target. */
+    // 如果当前正在RDB，且某个从节点已经读取了RDB数据，那么将从节点的RDB数据复制到当前从节点
     if (server.child_type == CHILD_TYPE_RDB &&
         server.rdb_child_type == RDB_CHILD_TYPE_DISK)
     {
@@ -2405,7 +2409,7 @@ int slaveTryPartialResynchronization(connection *conn, int read_reply) {
         return PSYNC_FULLRESYNC;
     }
 
-    // 如果Master回复的是继续同步
+    // 如果Master回复的是部分重新同步
     if (!strncmp(reply,"+CONTINUE",9)) {
         /* Partial resync was accepted. */
         serverLog(LL_NOTICE,
@@ -2757,6 +2761,7 @@ void syncWithMaster(connection *conn) {
     }
 
     /* Setup the non blocking download of the bulk file. */
+    // 从连接中读取主节点发来的数据
     if (connSetReadHandler(conn, readSyncBulkPayload)
             == C_ERR)
     {
@@ -3746,6 +3751,7 @@ void replicationCron(void) {
         replicationScriptCacheFlush();
     }
 
+    //
     replicationStartPendingFork();
 
     /* Remove the RDB file used for replication if Redis is not running
