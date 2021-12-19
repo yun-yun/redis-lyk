@@ -1991,6 +1991,7 @@ int clusterProcessPacket(clusterLink *link) {
             clusterProcessGossipSection(hdr,link);
 
         /* Anyway reply with a PONG */
+        // 回复PONG
         clusterSendPing(link,CLUSTERMSG_TYPE_PONG);
     }
 
@@ -2680,6 +2681,7 @@ void clusterSendPing(clusterLink *link, int type) {
 
     /* Populate the gossip fields */
     int maxiterations = wanted*3;
+    // 填充待发送的节点
     while(freshnodes > 0 && gossipcount < wanted && maxiterations--) {
         dictEntry *de = dictGetRandomKey(server.cluster->nodes);
         clusterNode *this = dictGetVal(de);
@@ -2712,6 +2714,7 @@ void clusterSendPing(clusterLink *link, int type) {
         gossipcount++;
     }
 
+    // 告知其他节点，主观宕机的节点
     /* If there are PFAIL nodes, add them at the end. */
     if (pfail_wanted) {
         dictIterator *di;
@@ -2722,6 +2725,7 @@ void clusterSendPing(clusterLink *link, int type) {
             clusterNode *node = dictGetVal(de);
             if (node->flags & CLUSTER_NODE_HANDSHAKE) continue;
             if (node->flags & CLUSTER_NODE_NOADDR) continue;
+            // 节点不是主观单机的，则跳过
             if (!(node->flags & CLUSTER_NODE_PFAIL)) continue;
             clusterSetGossipEntry(hdr,gossipcount,node);
             freshnodes--;
@@ -3797,6 +3801,7 @@ void clusterCron(void) {
             if (!(node->flags & (CLUSTER_NODE_PFAIL|CLUSTER_NODE_FAIL))) {
                 serverLog(LL_DEBUG,"*** NODE %.40s possibly failing",
                     node->name);
+                // 认为该节点主观宕机了
                 node->flags |= CLUSTER_NODE_PFAIL;
                 update_state = 1;
             }
@@ -4076,6 +4081,7 @@ void clusterUpdateState(void) {
 
     /* If we are in a minority partition, change the cluster state
      * to FAIL. */
+    // 网络分区
     {
         int needed_quorum = (server.cluster->size / 2) + 1;
 
