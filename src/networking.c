@@ -472,7 +472,7 @@ void afterErrorReply(client *c, const char *s, size_t len) {
         }
 
         if (len > 4096) len = 4096;
-        char *cmdname = c->lastcmd ? c->lastcmd->name : "<unknown>";
+        const char *cmdname = c->lastcmd ? c->lastcmd->name : "<unknown>";
         serverLog(LL_WARNING,"== CRITICAL == This %s is sending an error "
                              "to its %s: '%.*s' after processing the command "
                              "'%s'", from, to, (int)len, s, cmdname);
@@ -1575,6 +1575,7 @@ int _writeToClient(client *c, ssize_t *nwritten) {
     if (getClientType(c) == CLIENT_TYPE_SLAVE) {
         serverAssert(c->bufpos == 0 && listLength(c->reply) == 0);
 
+        // 将待写入的节点都写回给slave
         replBufBlock *o = listNodeValue(c->ref_repl_buf_node);
         serverAssert(o->used >= c->ref_block_pos);
         /* Send current block if it is not fully sent. */
@@ -1587,6 +1588,7 @@ int _writeToClient(client *c, ssize_t *nwritten) {
 
         /* If we fully sent the object on head, go to the next one. */
         listNode *next = listNextNode(c->ref_repl_buf_node);
+        // 存在下一个节点，说明当前节点是满的，可以进入下一节点
         if (next && c->ref_block_pos == o->used) {
             o->refcount--;
             ((replBufBlock *)(listNodeValue(next)))->refcount++;
@@ -2137,6 +2139,7 @@ void commandProcessed(client *c) {
     if (c->flags & CLIENT_MASTER) {
         long long applied = c->reploff - prev_offset;
         if (applied) {
+            // 将从master收到的命令传给子-从节点
             replicationFeedStreamFromMasterStream(c->pending_querybuf,applied);
             sdsrange(c->pending_querybuf,applied,-1);
         }
@@ -2342,7 +2345,7 @@ void readQueryFromClient(connection *conn) {
         /* Append the query buffer to the pending (not applied) buffer
          * of the master. We'll use this buffer later in order to have a
          * copy of the string applied by the last command executed. */
-        // 如果当前客户端是master要讲正在写入的命令放入缓存中？？？TODO
+        // 如果当前客户端是master要将正在写入的命令放入缓存中？？？TODO
         c->pending_querybuf = sdscatlen(c->pending_querybuf,
                                         c->querybuf+qblen,nread);
     }
@@ -2632,7 +2635,7 @@ void clientCommand(client *c) {
 "      Kill connections made from the specified address",
 "    * LADDR (<ip:port>|<unixsocket>:0)",
 "      Kill connections made to specified local address",
-"    * TYPE (normal|master|replica|pubsub)",
+"    * TYPE (NORMAL|MASTER|REPLICA|PUBSUB)",
 "      Kill connections by type.",
 "    * USER <username>",
 "      Kill connections authenticated by <username>.",
