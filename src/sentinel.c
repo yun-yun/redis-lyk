@@ -5230,6 +5230,7 @@ void sentinelHandleRedisInstance(sentinelRedisInstance *ri) {
         // 检查客观宕机
         sentinelCheckObjectivelyDown(ri);
         if (sentinelStartFailoverIfNeeded(ri))
+            // 询问其他哨兵，master的状态
             sentinelAskMasterStateToOtherSentinels(ri,SENTINEL_ASK_FORCED);
         // 哨兵故障转移状态机
         sentinelFailoverStateMachine(ri);
