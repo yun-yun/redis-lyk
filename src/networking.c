@@ -1027,6 +1027,19 @@ int clientHasPendingReplies(client *c) {
         return c->bufpos || listLength(c->reply);
     }
 }
+
+/* Return true if client connected from loopback interface */
+int islocalClient(client *c) {
+    /* unix-socket */
+    if (c->flags & CLIENT_UNIX_SOCKET) return 1;
+
+    /* tcp */
+    char cip[NET_IP_STR_LEN+1] = { 0 };
+    connPeerToString(c->conn, cip, sizeof(cip)-1, NULL);
+
+    return !strcmp(cip,"127.0.0.1") || !strcmp(cip,"::1");
+}
+
 // 客户端接收
 void clientAcceptHandler(connection *conn) {
     client *c = connGetPrivateData(conn);
@@ -1045,13 +1058,9 @@ void clientAcceptHandler(connection *conn) {
      * user what to do to fix it if needed. */
     // redis保护模式和无密码时，只接收127.0.0.1的请求
     if (server.protected_mode &&
-        DefaultUser->flags & USER_FLAG_NOPASS &&
-        !(c->flags & CLIENT_UNIX_SOCKET))
+        DefaultUser->flags & USER_FLAG_NOPASS)
     {
-        char cip[NET_IP_STR_LEN+1] = { 0 };
-        connPeerToString(conn, cip, sizeof(cip)-1, NULL);
-
-        if (strcmp(cip,"127.0.0.1") && strcmp(cip,"::1")) {
+        if (!islocalClient(c)) {
             char *err =
                 "-DENIED Redis is running in protected mode because protected "
                 "mode is enabled and no password is set for the default user. "
@@ -1245,6 +1254,18 @@ void freeClientArgv(client *c) {
     c->argv = NULL;
 }
 
+/* Close all the slaves connections. This is useful in chained replication
+ * when we resync with our own master and want to force all our slaves to
+ * resync with us as well. */
+void disconnectSlaves(void) {
+    listIter li;
+    listNode *ln;
+    listRewind(server.slaves,&li);
+    while((ln = listNext(&li))) {
+        freeClient((client*)ln->value);
+    }
+}
+
 /* Check if there is any other slave waiting dumping RDB finished expect me.
  * This function is useful to judge current dumping RDB can be used for full
  * synchronization or not. */
@@ -1331,18 +1352,6 @@ void unlinkClient(client *c) {
 
     /* Clear the tracking status. */
     if (c->flags & CLIENT_TRACKING) disableTracking(c);
-}
-
-/* Close all the slaves connections. This is useful in chained replication
- * when we resync with our own master and want to force all our slaves to
- * resync with us as well. */
-void disconnectSlaves(void) {
-    listIter li;
-    listNode *ln;
-    listRewind(server.slaves,&li);
-    while((ln = listNext(&li))) {
-        freeClient((client*)ln->value);
-    }
 }
 
 void freeClient(client *c) {
