@@ -1257,8 +1257,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     checkClientPauseTimeoutAndReturnIfPaused();
 
     /* Replication cron function -- used to reconnect to master,
-     * detect transfer failures, start background RDB transfers and so forth. 
-     * 
+     * detect transfer failures, start background RDB transfers and so forth.
+     *
      * If Redis is trying to failover then run the replication cron faster so
      * progress on the handshake happens more quickly. */
     if (server.failover_state != NO_FAILOVER) {
@@ -1466,7 +1466,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
      * processUnblockedClients(), so if there are multiple pipelined WAITs
      * and the just unblocked WAIT gets blocked again, we don't have to wait
      * a server cron cycle in absence of other event loop events. See #6623.
-     * 
+     *
      * We also don't send the ACKs while clients are paused, since it can
      * increment the replication backlog, they'll be sent after the pause
      * if we are still the master. */
@@ -1481,7 +1481,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     }
 
     /* We may have received updates from clients about their current offset. NOTE:
-     * this can't be done where the ACK is received since failover will disconnect 
+     * this can't be done where the ACK is received since failover will disconnect
      * our clients. */
     updateFailoverStatus();
 
@@ -2797,7 +2797,7 @@ void propagate(int dbid, robj **argv, int argc, int flags) {
     if (server.in_exec && !server.propagate_in_transaction)
         execCommandPropagateMulti(dbid);
 
-    /* This needs to be unreachable since the dataset should be fixed during 
+    /* This needs to be unreachable since the dataset should be fixed during
      * client pause, otherwise data may be lost during a failover. */
     serverAssert(!(areClientsPaused() && !server.client_pause_in_transaction));
 
@@ -3513,13 +3513,13 @@ int processCommand(client *c) {
 
     /* If the server is paused, block the client until
      * the pause has ended. Replicas are never paused. */
-    if (!(c->flags & CLIENT_SLAVE) && 
+    if (!(c->flags & CLIENT_SLAVE) &&
         ((server.client_pause_type == CLIENT_PAUSE_ALL) ||
         (server.client_pause_type == CLIENT_PAUSE_WRITE && is_may_replicate_command)))
     {
         c->bpop.timeout = 0;
         blockClient(c,BLOCKED_PAUSE);
-        return C_OK;       
+        return C_OK;
     }
 
     /* Exec the command 执行命令 */

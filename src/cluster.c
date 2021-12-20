@@ -620,7 +620,8 @@ void clusterInit(void) {
         serverLog(LL_WARNING, "Failed listening on port %u (cluster), aborting.", cport);
         exit(1);
     }
-    
+
+    // 集群端口绑定监听事件
     if (createSocketAcceptHandler(&server.cfd, clusterAcceptHandler) != C_OK) {
         serverPanic("Unrecoverable error creating Redis Cluster socket accept handler.");
     }
@@ -752,6 +753,7 @@ static void clusterConnAcceptHandler(connection *conn) {
     connSetPrivateData(conn, link);
 
     /* Register read handler */
+    // 集群绑定读事件处理器
     connSetReadHandler(conn, clusterReadHandler);
 }
 
@@ -797,6 +799,7 @@ void clusterAcceptHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
         /* Accept the connection now.  connAccept() may call our handler directly
          * or schedule it for later depending on connection implementation.
          */
+        // 接收集群连接
         if (connAccept(conn, clusterConnAcceptHandler) == C_ERR) {
             if (connGetState(conn) == CONN_STATE_ERROR)
                 serverLog(LL_VERBOSE,
@@ -1972,6 +1975,7 @@ int clusterProcessPacket(clusterLink *link) {
          * In this stage we don't try to add the node with the right
          * flags, slaveof pointer, and so forth, as this details will be
          * resolved when we'll receive PONGs from the node. */
+        // 消息是MEET 添加节点
         if (!sender && type == CLUSTERMSG_TYPE_MEET) {
             clusterNode *node;
 
