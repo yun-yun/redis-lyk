@@ -1402,7 +1402,9 @@ void markNodeAsFailingIfNeeded(clusterNode *node) {
     int failures;
     int needed_quorum = (server.cluster->size / 2) + 1;
 
+    // 我们可以访问该节点，不认为该节点主观宕机
     if (!nodeTimedOut(node)) return; /* We can reach it. */
+    // 节点已经客观宕机了
     if (nodeFailed(node)) return; /* Already FAILing. */
 
     failures = clusterNodeFailureReportsCount(node);
