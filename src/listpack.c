@@ -755,17 +755,25 @@ unsigned char *lpFind(unsigned char *lp, unsigned char *p, unsigned char *s,
  * 'size' or integer element 'eleint' at the specified position 'p', with 'p'
  * being a listpack element pointer obtained with lpFirst(), lpLast(), lpNext(),
  * lpPrev() or lpSeek().
+ * 插入，删除或替换一个指定长度‘size’的元素‘elestr’ 或一个int元素‘eleint’在指定的位置’p‘上。
+ * 'p' 是使用 lpFirst()、lpLast()、lpNext()、lpPrev() 或 lpSeek() 获得的listpack元素指针
  *
  * The element is inserted before, after, or replaces the element pointed
  * by 'p' depending on the 'where' argument, that can be LP_BEFORE, LP_AFTER
  * or LP_REPLACE.
+ * 这个元素会被插入到由'p'指定的之前（LP_BEFORE）、之后(LP_AFTER)、或被替换（LP_REPLACE）的位置
  * 
  * If both 'elestr' and `eleint` are NULL, the function removes the element
  * pointed by 'p' instead of inserting one.
+ * 如果’elestr‘和’eleint‘都是NULL，这个方法会将'p'指定位置的元素删除，而不是插入。
  * If `eleint` is non-NULL, 'size' is the length of 'eleint', the function insert
  * or replace with a 64 bit integer, which is stored in the 'eleint' buffer.
+ * 如果’eleint‘不是NULL，长度是’eleint‘，那么这个方法会用’eleint‘缓存的64位int插入或替换
  * If 'elestr` is non-NULL, 'size' is the length of 'elestr', the function insert
  * or replace with a string, which is stored in the 'elestr' buffer.
+ * 如果’elestr‘不是NULL，长度是’elestr‘，这个方法会将’elestr‘中的字符串插入或替换
+ *
+ *
  * 
  * Returns NULL on out of memory or when the listpack total length would exceed
  * the max allowed size of 2^32-1, otherwise the new pointer to the listpack
@@ -786,25 +794,31 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
     unsigned char backlen[LP_MAX_BACKLEN_SIZE];
 
     uint64_t enclen; /* The length of the encoded element. */
+    // 如果都是NULL代表删除，也就是where = LP_REPLACE;
     int delete = (elestr == NULL && eleint == NULL);
 
     /* when deletion, it is conceptually replacing the element with a
      * zero-length element. So whatever we get passed as 'where', set
      * it to LP_REPLACE. */
+    //删除时，不论where是什么，where 都改为 LP_REPLACE
     if (delete) where = LP_REPLACE;
 
     /* If we need to insert after the current element, we just jump to the
      * next element (that could be the EOF one) and handle the case of
      * inserting before. So the function will actually deal with just two
      * cases: LP_BEFORE and LP_REPLACE. */
+    // 如果是在当前元素之后插入
     if (where == LP_AFTER) {
+        // 跳到当前元素p的下一个元素
         p = lpSkip(p);
+        // 相当于在下一个元素的之前插入
         where = LP_BEFORE;
         ASSERT_INTEGRITY(lp, p);
     }
 
     /* Store the offset of the element 'p', so that we can obtain its
      * address again after a reallocation. */
+//    存储元素p的偏移量，后续还会使用
     unsigned long poff = p-lp;
 
     int enctype;
@@ -962,7 +976,9 @@ unsigned char *lpPrependInteger(unsigned char *lp, long long lval) {
  * listpack. It is implemented in terms of lpInsert(), so the return value is
  * the same as lpInsert(). */
 unsigned char *lpAppend(unsigned char *lp, unsigned char *ele, uint32_t size) {
+    // 获取总byte数量
     uint64_t listpack_bytes = lpGetTotalBytes(lp);
+    // 获取listpack最后一个元素
     unsigned char *eofptr = lp + listpack_bytes - 1;
     return lpInsert(lp,ele,NULL,size,eofptr,LP_BEFORE,NULL);
 }
