@@ -3584,7 +3584,7 @@ void pauseClients(mstime_t end, pause_type type) {
     /* We allow write commands that were queued
      * up before and after to execute. We need
      * to track this state so that we don't assert
-     * in propagate(). */
+     * in propagateNow(). */
     if (server.in_exec) {
         server.client_pause_in_transaction = 1;
     }
@@ -3646,9 +3646,12 @@ void processEventsWhileBlocked(void) {
     /* Note: when we are processing events while blocked (for instance during
      * busy Lua scripts), we set a global flag. When such flag is set, we
      * avoid handling the read part of clients using threaded I/O.
-     * See https://github.com/redis/redis/issues/6988 for more info. */
+     * See https://github.com/redis/redis/issues/6988 for more info.
+     * Note that there could be cases of nested calls to this function,
+     * specifically on a busy script during async_loading rdb, and scripts
+     * that came from AOF. */
     // 当进程被阻塞时，会设置一个全局标记，当设置了这个全局标记时，会让IO线程停止接收数据
-    ProcessingEventsWhileBlocked = 1;
+    ProcessingEventsWhileBlocked++;
     while (iterations--) {
         long long startval = server.events_processed_while_blocked;
         long long ae_events = aeProcessEvents(server.el,
@@ -3663,7 +3666,8 @@ void processEventsWhileBlocked(void) {
 
     whileBlockedCron();
 
-    ProcessingEventsWhileBlocked = 0;
+    ProcessingEventsWhileBlocked--;
+    serverAssert(ProcessingEventsWhileBlocked >= 0);
 }
 
 /* ==========================================================================
