@@ -685,6 +685,7 @@ unsigned char *lpGetValue(unsigned char *p, unsigned int *slen, long long *lval)
 
 /* Find pointer to the entry equal to the specified entry. Skip 'skip' entries
  * between every comparison. Returns NULL when the field could not be found. */
+// TODO 测试如何实现寻找节点的？
 unsigned char *lpFind(unsigned char *lp, unsigned char *p, unsigned char *s, 
                       uint32_t slen, unsigned int skip) {
     int skipcnt = 0;
@@ -695,8 +696,10 @@ unsigned char *lpFind(unsigned char *lp, unsigned char *p, unsigned char *s,
     uint32_t lp_bytes = lpBytes(lp);
 
     assert(p);
+    // 寻找节点的p
     while (p) {
         if (skipcnt == 0) {
+            // 获取p节点的元素值
             value = lpGetWithSize(p, &ll, NULL, &entry_size);
             if (value) {
                 /* check the value doesn't reach outside the listpack before accessing it */
@@ -818,9 +821,10 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
 
     /* Store the offset of the element 'p', so that we can obtain its
      * address again after a reallocation. */
-//    存储元素p的偏移量，后续还会使用
+//    计算并存储存储元素p的偏移量，后续还会使用
     unsigned long poff = p-lp;
 
+    // 分析参数的编码的类型
     int enctype;
     if (elestr) {
         /* Calling lpEncodeGetType() results into the encoded version of the
@@ -845,6 +849,7 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
      * and append it to the end: this allows to traverse the listpack from
      * the end to the start. */
     unsigned long backlen_size = (!delete) ? lpEncodeBacklen(backlen,enclen) : 0;
+    // 获取旧的字节数
     uint64_t old_listpack_bytes = lpGetTotalBytes(lp);
     uint32_t replaced_len  = 0;
     if (where == LP_REPLACE) {
@@ -866,6 +871,7 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
     unsigned char *dst = lp + poff; /* May be updated after reallocation. */
 
     /* Realloc before: we need more room. */
+    // 申请更大的容量, 扩容
     if (new_listpack_bytes > old_listpack_bytes &&
         new_listpack_bytes > lp_malloc_size(lp)) {
         if ((lp = lp_realloc(lp,new_listpack_bytes)) == NULL) return NULL;
@@ -874,6 +880,7 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
 
     /* Setup the listpack relocating the elements to make the exact room
      * we need to store the new one. */
+    // 移动元素，腾出空间
     if (where == LP_BEFORE) {
         memmove(dst+enclen+backlen_size,dst,old_listpack_bytes-poff);
     } else { /* LP_REPLACE. */
@@ -884,12 +891,14 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
     }
 
     /* Realloc after: we need to free space. */
+    // 如果新的容量小，则释放多余内存
     if (new_listpack_bytes < old_listpack_bytes) {
         if ((lp = lp_realloc(lp,new_listpack_bytes)) == NULL) return NULL;
         dst = lp + poff;
     }
 
     /* Store the entry. */
+    // 将元素放入
     if (newp) {
         *newp = dst;
         /* In case of deletion, set 'newp' to NULL if the next element is
