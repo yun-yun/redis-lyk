@@ -466,7 +466,7 @@ long long emptyData(int dbnum, int flags, void(callback)(dict*)) {
 
     if (with_functions) {
         serverAssert(dbnum == -1);
-        functionsCtxClearCurrent(async);
+        functionsLibCtxClearCurrent(async);
     }
 
     /* Also fire the end event. Note that this event will fire almost
