@@ -1088,6 +1088,7 @@ void cronUpdateMemoryStats() {
  */
 
 int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
+    serverLog(LL_WARNING, "serverCron 定时器开始执行");
     int j;
     UNUSED(eventLoop);
     UNUSED(id);
@@ -1340,6 +1341,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
                           0,
                           &ei);
 
+
+    serverLog(LL_WARNING, "serverCron 定时器开始执行完毕");
     server.cronloops++;
     return 1000/server.hz;
 }
