@@ -1568,7 +1568,7 @@ int keyIsExpired(redisDb *db, robj *key) {
      * See issue #1525 on Github for more information. */
     // 在lua脚本中，秘钥只能在第一次访问时过期，而不能在lua脚本执行过程中过期
     if (server.script_caller) {
-        now = evalTimeSnapshot();
+        now = scriptTimeSnapshot();
     }
     /* If we are in the middle of a command execution, we still want to use
      * a reference time that does not change: in that case we just use the
