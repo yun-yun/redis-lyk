@@ -6487,6 +6487,20 @@ struct redisCommandArg WATCH_Args[] = {
 {0}
 };
 
+/********** LYK ********************/
+
+/* LYK history */
+#define LYK_History NULL
+
+/* LYK hints */
+#define LYK_Hints NULL
+
+/* LYK argument table */
+struct redisCommandArg LYK_Args[] = {
+        {"key",ARG_TYPE_KEY,0,NULL,NULL,NULL,CMD_ARG_NONE},
+        {0}
+};
+
 /* Main command table */
 struct redisCommand redisCommandTable[] = {
 /* bitmap */
@@ -6747,5 +6761,6 @@ struct redisCommand redisCommandTable[] = {
 {"multi","Mark the start of a transaction block","O(1)","1.2.0",CMD_DOC_NONE,NULL,NULL,COMMAND_GROUP_TRANSACTIONS,MULTI_History,MULTI_Hints,multiCommand,1,CMD_NOSCRIPT|CMD_LOADING|CMD_STALE|CMD_FAST,ACL_CATEGORY_TRANSACTION},
 {"unwatch","Forget about all watched keys","O(1)","2.2.0",CMD_DOC_NONE,NULL,NULL,COMMAND_GROUP_TRANSACTIONS,UNWATCH_History,UNWATCH_Hints,unwatchCommand,1,CMD_NOSCRIPT|CMD_LOADING|CMD_STALE|CMD_FAST,ACL_CATEGORY_TRANSACTION},
 {"watch","Watch the given keys to determine execution of the MULTI/EXEC block","O(1) for every key.","2.2.0",CMD_DOC_NONE,NULL,NULL,COMMAND_GROUP_TRANSACTIONS,WATCH_History,WATCH_Hints,watchCommand,-2,CMD_NOSCRIPT|CMD_LOADING|CMD_STALE|CMD_FAST,ACL_CATEGORY_TRANSACTION,{{0,KSPEC_BS_INDEX,.bs.index={1},KSPEC_FK_RANGE,.fk.range={-1,1,0}}},.args=WATCH_Args},
+{"lyk","lyk自定义命令","O(1)","2.6.0",CMD_DOC_NONE,NULL,NULL,COMMAND_GROUP_STRING,LYK_History,LYK_Hints,lykCommand,2,CMD_READONLY|CMD_FAST,ACL_CATEGORY_STRING,{{CMD_KEY_READ,KSPEC_BS_INDEX,.bs.index={1},KSPEC_FK_RANGE,.fk.range={0,1,0}}},.args=LYK_Args},
 {0}
 };
