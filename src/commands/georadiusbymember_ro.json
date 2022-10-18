@@ -20,7 +20,8 @@
         "key_specs": [
             {
                 "flags": [
-                    "READ"
+                    "RO",
+                    "ACCESS"
                 ],
                 "begin_search": {
                     "index": {
@@ -95,7 +96,7 @@
                 "optional": true
             },
             {
-                "name": "count",
+                "name": "count-block",
                 "type": "block",
                 "optional": true,
                 "arguments": [

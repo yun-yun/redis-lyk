@@ -26,7 +26,8 @@
         "key_specs": [
             {
                 "flags": [
-                    "READ"
+                    "RO",
+                    "ACCESS"
                 ],
                 "begin_search": {
                     "index": {
@@ -64,7 +65,7 @@
             },
             {
                 "token": "LIMIT",
-                "name": "offset_count",
+                "name": "limit",
                 "type": "block",
                 "optional": true,
                 "arguments": [
