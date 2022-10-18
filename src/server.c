@@ -7099,6 +7099,7 @@ int main(int argc, char **argv) {
     if (server.cluster_enabled) {
         clusterInitListeners();
     }
+    // 初始化服务后，初始化后台IO线程，
     InitServerLast();
 
     if (!server.sentinel_mode) {
