@@ -2551,6 +2551,7 @@ void resetServerStats(void) {
  * can work reliably (default cancelability type is PTHREAD_CANCEL_DEFERRED).
  * Needed for pthread_cancel used by the fast memory test used by the crash report. */
 void makeThreadKillable(void) {
+    // 线程取消状态
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 }
@@ -2560,7 +2561,9 @@ void initServer(void) {
 
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
+    // lyk 注册停止信号处理器
     setupSignalHandlers();
+    // lyk 允许线程取消
     makeThreadKillable();
 
     if (server.syslog_enabled) {
@@ -2615,7 +2618,9 @@ void initServer(void) {
         exit(1);
     }
 
+    // lyk 共享对象复用
     createSharedObjects();
+    // 设置open files限制
     adjustOpenFilesLimit();
     const char *clk_msg = monotonicInit();
     serverLog(LL_NOTICE, "monotonic clock: %s", clk_msg);
@@ -7108,7 +7113,9 @@ int main(int argc, char **argv) {
     initServerConfig();
     ACLInit(); /* The ACL subsystem must be initialized ASAP because the
                   basic networking code and client creation depends on it. */
+    // lyktodo Module
     moduleInitModulesSystem();
+    // lyktodo 网络
     connTypeInitialize();
 
     /* Store the executable path and arguments in a safe place in order
@@ -7121,6 +7128,7 @@ int main(int argc, char **argv) {
     /* We need to init sentinel right now as parsing the configuration file
      * in sentinel mode will have the effect of populating the sentinel
      * data structures with master nodes to monitor. */
+    // lyktodo 哨兵
     if (server.sentinel_mode) {
         initSentinelConfig();
         initSentinel();
@@ -7276,7 +7284,7 @@ int main(int argc, char **argv) {
 #endif /* __linux__ */
 
     /* Daemonize if needed */
-    server.supervised = redisIsSupervised(server.supervised_mode);
+    server.supervised = redisIsSupervised(server.supervised_mode);    // 是否被systemd等监督
     int background = server.daemonize && !server.supervised;
     if (background) daemonize();
 
@@ -7301,15 +7309,18 @@ int main(int argc, char **argv) {
     redisAsciiArt();
     checkTcpBacklogSettings();
     if (server.cluster_enabled) {
+        // lyktodo 集群模式
         clusterInit();
     }
     if (!server.sentinel_mode) {
+        // lyktodo module
         moduleInitModulesSystemLast();
         moduleLoadFromQueue();
     }
     ACLLoadUsersAtStartup();
     initListeners();
     if (server.cluster_enabled) {
+        // lyktodo 集群模式
         clusterInitListeners();
     }
     InitServerLast();
@@ -7317,6 +7328,7 @@ int main(int argc, char **argv) {
     if (!server.sentinel_mode) {
         /* Things not needed when running in Sentinel mode. */
         serverLog(LL_NOTICE,"Server initialized");
+        // lyktodo aof
         aofLoadManifestFromDisk();
         loadDataFromDisk();
         aofOpenIfNeededOnServerStart();
