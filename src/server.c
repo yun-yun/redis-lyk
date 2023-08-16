@@ -1388,6 +1388,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* Check if a background saving or AOF rewrite in progress terminated. */
     if (hasActiveChildProcess() || ldbPendingChildren())
     {
+        // lyk 以1000ms的间隔执行 receiveChildInfo
         run_with_period(1000) receiveChildInfo();
         checkChildrenDone();
     } else {
@@ -3521,6 +3522,7 @@ void call(client *c, int flags) {
     if (monotonicGetType() == MONOTONIC_CLOCK_HW)
         monotonic_start = getMonotonicUs();
 
+    // lyk 执行命令
     c->cmd->proc(c);
 
     exitExecutionUnit();
@@ -3576,6 +3578,7 @@ void call(client *c, int flags) {
     /* Log the command into the Slow log if needed.
      * If the client is blocked we will handle slowlog when it is unblocked. */
     if (update_command_stats && !(c->flags & CLIENT_BLOCKED))
+        // lyk 记录慢日志
         slowlogPushCurrentCommand(c, real_cmd, c->duration);
 
     /* Send the command to clients in MONITOR mode if applicable,
